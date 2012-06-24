@@ -1,0 +1,43 @@
+package com.google.android.maps;
+
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.Queue;
+
+public class MapTileRequestState {
+
+	private final Queue<MapTileModuleProviderBase> mProviderQueue;
+	private final MapTile mMapTile;
+	private final IMapTileProviderCallback mCallback;
+	private MapTileModuleProviderBase mCurrentProvider;
+
+	public MapTileRequestState(final MapTile mapTile,
+			final MapTileModuleProviderBase[] providers,
+			final IMapTileProviderCallback callback) {
+		mProviderQueue = new LinkedList<MapTileModuleProviderBase>();
+		Collections.addAll(mProviderQueue, providers);
+		mMapTile = mapTile;
+		mCallback = callback;
+	}
+
+	public IMapTileProviderCallback getCallback() {
+		return mCallback;
+	}
+
+	public MapTileModuleProviderBase getCurrentProvider() {
+		return mCurrentProvider;
+	}
+
+	public MapTile getMapTile() {
+		return mMapTile;
+	}
+
+	public MapTileModuleProviderBase getNextProvider() {
+		mCurrentProvider = mProviderQueue.poll();
+		return mCurrentProvider;
+	}
+
+	public boolean isEmpty() {
+		return mProviderQueue.isEmpty();
+	}
+}
