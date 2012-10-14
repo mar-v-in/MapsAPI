@@ -62,7 +62,10 @@ public abstract class MapTileProviderBase implements IMapTileProviderCallback,
 				final ExpirableBitmapDrawable drawable = new ExpirableBitmapDrawable(
 						bitmap);
 				drawable.setState(new int[] { ExpirableBitmapDrawable.EXPIRED });
-				mTileCache.putTile(tile, drawable);
+                Drawable existingTile = mTileCache.getMapTile(tile);
+                if (existingTile == null || ExpirableBitmapDrawable.isDrawableExpired(existingTile))
+                        mTileCache.putTile(tile, drawable);
+
 			}
 		}
 
@@ -80,7 +83,8 @@ public abstract class MapTileProviderBase implements IMapTileProviderCallback,
 				try {
 					handleTile(pTileSizePx, pTile, pX, pY);
 				} catch (final OutOfMemoryError e) {
-					Log.e("MapaAPI", "MapTileProviderBase: OutOfMemoryError rescaling cache");
+					Log.e("MapaAPI",
+							"MapTileProviderBase: OutOfMemoryError rescaling cache");
 				}
 			}
 		}
@@ -117,11 +121,13 @@ public abstract class MapTileProviderBase implements IMapTileProviderCallback,
 				mSrcRect.set(xx, yy, xx + mTileSize_2, yy + mTileSize_2);
 				mDestRect.set(0, 0, pTileSizePx, pTileSizePx);
 				final Bitmap bitmap = Bitmap.createBitmap(pTileSizePx,
-						pTileSizePx, Bitmap.Config.ARGB_8888);
+						pTileSizePx, Bitmap.Config.RGB_565);
 				final Canvas canvas = new Canvas(bitmap);
 				canvas.drawBitmap(oldBitmap, mSrcRect, mDestRect, null);
 				if (DEBUGMODE) {
-					Log.d("MapaAPI", "MapTileProviderBase: Created scaled tile: " + pTile);
+					Log.d("MapaAPI",
+							"MapTileProviderBase: Created scaled tile: "
+									+ pTile);
 					mDebugPaint.setTextSize(40);
 					canvas.drawText("scaled", 50, 50, mDebugPaint);
 				}
@@ -162,7 +168,7 @@ public abstract class MapTileProviderBase implements IMapTileProviderCallback,
 						if (oldBitmap != null) {
 							if (bitmap == null) {
 								bitmap = Bitmap.createBitmap(pTileSizePx,
-										pTileSizePx, Bitmap.Config.ARGB_8888);
+										pTileSizePx, Bitmap.Config.RGB_565);
 								canvas = new Canvas(bitmap);
 								canvas.drawColor(Color.LTGRAY);
 							}
@@ -182,7 +188,9 @@ public abstract class MapTileProviderBase implements IMapTileProviderCallback,
 			if (bitmap != null) {
 				mNewTiles.put(pTile, bitmap);
 				if (DEBUGMODE) {
-					Log.d("MapaAPI", "MapTileProviderBase: Created scaled tile: " + pTile);
+					Log.d("MapaAPI",
+							"MapTileProviderBase: Created scaled tile: "
+									+ pTile);
 					mDebugPaint.setTextSize(40);
 					canvas.drawText("scaled", 50, 50, mDebugPaint);
 				}
@@ -269,7 +277,8 @@ public abstract class MapTileProviderBase implements IMapTileProviderCallback,
 		}
 
 		if (DEBUGMODE) {
-			Log.d("MapaAPI", "MapTileProviderBase: MapTile request complete: " + tile);
+			Log.d("MapaAPI", "MapTileProviderBase: MapTile request complete: "
+					+ tile);
 		}
 	}
 
@@ -289,7 +298,38 @@ public abstract class MapTileProviderBase implements IMapTileProviderCallback,
 		}
 
 		if (DEBUGMODE) {
-			Log.d("MapaAPI", "MapTileProviderBase: MapTile request failed: " + tile);
+			Log.d("MapaAPI", "MapTileProviderBase: MapTile request failed: "
+					+ tile);
+		}
+	}
+
+	/**
+	 * Called by implementation class methods indicating that they have produced
+	 * an expired result that can be used but better results may be delivered
+	 * later. The tile is added to the cache, and a MAPTILE_SUCCESS_ID message
+	 * is sent.
+	 * 
+	 * @param pState
+	 *            the map tile request state object
+	 * @param pDrawable
+	 *            the Drawable of the map tile
+	 */
+	@Override
+	public void mapTileRequestExpiredTile(MapTileRequestState pState,
+			Drawable pDrawable) {
+		final MapTile tile = pState.getMapTile();
+		if (pDrawable != null) {
+			mTileCache.putTile(tile, pDrawable);
+		}
+
+		// tell our caller we've finished and it should update its view
+		if (mTileRequestCompleteHandler != null) {
+			mTileRequestCompleteHandler
+					.sendEmptyMessage(MapTile.MAPTILE_SUCCESS_ID);
+		}
+
+		if (DEBUGMODE) {
+			Log.d("MapsAPI","MapTile request complete: " + tile);
 		}
 	}
 
@@ -313,8 +353,8 @@ public abstract class MapTileProviderBase implements IMapTileProviderCallback,
 
 		final long startMs = System.currentTimeMillis();
 
-		Log.i("MapaAPI", "MapTileProviderBase: rescale tile cache from " + pOldZoomLevel + " to "
-				+ pNewZoomLevel);
+		Log.i("MapaAPI", "MapTileProviderBase: rescale tile cache from "
+				+ pOldZoomLevel + " to " + pNewZoomLevel);
 
 		final int tileSize = getTileSource().getTileSizePixels();
 		final int worldSize_2 = TileSystem.MapSize(pNewZoomLevel) >> 1;
@@ -326,7 +366,8 @@ public abstract class MapTileProviderBase implements IMapTileProviderCallback,
 		tileLooper.loop(null, pNewZoomLevel, tileSize, viewPort);
 
 		final long endMs = System.currentTimeMillis();
-		Log.i("MapaAPI", "MapTileProviderBase: Finished rescale in " + (endMs - startMs) + "ms");
+		Log.i("MapaAPI", "MapTileProviderBase: Finished rescale in "
+				+ (endMs - startMs) + "ms");
 	}
 
 	public void setTileRequestCompleteHandler(final Handler handler) {

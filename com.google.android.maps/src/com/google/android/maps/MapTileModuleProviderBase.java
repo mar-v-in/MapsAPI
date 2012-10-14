@@ -153,13 +153,13 @@ public abstract class MapTileModuleProviderBase implements
 		 * A tile has loaded but it's expired. Return it <b>and</b> send request
 		 * to next provider.
 		 */
-		private void tileLoadedExpired(final MapTileRequestState pState,
+		protected void tileLoadedExpired(final MapTileRequestState pState,
 				final Drawable pDrawable) {
 			pState.getCallback().mapTileRequestCompleted(pState, pDrawable);
 			pState.getCallback().mapTileRequestFailed(pState);
 		}
 
-		private void tileLoadedFailed(final MapTileRequestState pState) {
+		protected void tileLoadedFailed(final MapTileRequestState pState) {
 			removeTileFromQueues(pState.getMapTile());
 			pState.getCallback().mapTileRequestFailed(pState);
 		}

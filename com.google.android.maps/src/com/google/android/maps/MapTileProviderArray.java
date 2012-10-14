@@ -205,4 +205,19 @@ public class MapTileProviderArray extends MapTileProviderBase {
 			clearTileCache();
 		}
 	}
+
+	@Override
+	public void mapTileRequestExpiredTile(MapTileRequestState aState,
+			Drawable aDrawable) {
+		final MapTileModuleProviderBase nextProvider = findNextAppropriateProvider(aState);
+		if (nextProvider != null) {
+			nextProvider.loadMapTileAsync(aState);
+		} else {
+			synchronized (mWorking) {
+				mWorking.remove(aState);
+			}
+		}
+		super.mapTileRequestExpiredTile(aState, aDrawable);
+	}
+
 }
