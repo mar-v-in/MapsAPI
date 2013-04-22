@@ -1,0 +1,91 @@
+<project name="com.google.android.maps" default="clean-build">
+	<property name="sdk.jar" value="" />
+	<property name="sign.store.pass" value="" />
+	<property name="sign.key.alias" value="" />
+	<property name="sign.key.pass" value="" />
+
+	<property name="bin.dir" value="bin" />
+	<property name="intermediate.dir" value="${bin.dir}" />
+	<property name="out.dir" value="out" />
+	<property name="in.dir" value="in" />
+	<property name="src.dir" value="src" />
+
+	<echo>Compiling ${ant.project.name}...</echo>
+	<property name="out.files.dir" value="${out.dir}/files" />
+	<property name="out.flashable.zip" value="${out.dir}/mapsapi.flashable.zip" />
+	<property name="intermediate.classes.dir" value="${intermediate.dir}/classes" />
+	<property name="classes.dex" value="classes.dex" />
+	<property name="intermediate.classes.dex" value="${intermediate.dir}/${classes.dex}" />
+	<property name="target.jar" value="${bin.dir}/${ant.project.name}.jar" />
+	<target name="clean">
+		<delete dir="${bin.dir}" />
+		<delete dir="${out.dir}" />
+	</target>
+	<target name="javac">
+		<mkdir dir="${intermediate.classes.dir}" />
+		<javac srcdir="${src.dir}" destdir="${intermediate.classes.dir}" source="1.6"
+			target="1.6" includeAntRuntime="false" bootclasspath="${sdk.jar}" />
+	</target>
+	<target name="dex" depends="javac">
+		<exec executable="dx" failonerror="true">
+			<arg value="--dex" />
+			<arg value="--output=${intermediate.classes.dex}" />
+			<arg path="${intermediate.classes.dir}" />
+		</exec>
+	</target>
+	<target name="jar" depends="dex">
+		<mkdir dir="${bin.dir}" />
+		<jar destfile="${target.jar}" 
+			basedir="${intermediate.dir}" 
+			includes="${classes.dex}" />
+	</target>
+	<target name="sign" depends="jar">
+		<exec executable="jarsigner" failonerror="true">
+			<arg value="-sigalg" />
+			<arg value="MD5withRSA" />
+			<arg value="-digestalg" />
+			<arg value="SHA1" />
+			<arg value="-storepass" />
+			<arg value="${sign.store.pass}" />
+			<arg value="-keypass" />
+			<arg value="${sign.key.pass}" />
+			<arg value="${target.jar}" />
+			<arg value="${sign.key.alias}" />
+		</exec>		
+	</target>
+	<target name="out" depends="sign">
+		<mkdir dir="${out.dir}" />
+		<mkdir dir="${out.files.dir}/system/framework" />
+		<mkdir dir="${out.files.dir}/system/etc/permissions" />
+		<copy file="${target.jar}" toDir="${out.files.dir}/system/framework" />
+		<copy file="${in.dir}/com.google.android.maps.xml" 
+			toDir="${out.files.dir}/system/etc/permissions" />
+		<copy file="${in.dir}/flashable.zip" toFile="${out.flashable.zip}" />
+		<zip update="yes" compress="false" destfile="${out.flashable.zip}" 
+			basedir="${out.files.dir}" />
+	</target>
+	<target name="push-files" depends="out">
+		<exec executable="adb" failonerror="true">
+			<arg value="push" />
+			<arg value="out/files" />
+			<arg value="/" />
+		</exec>
+	</target>
+	<target name="push-zip" depends="out">
+		<exec executable="adb" failonerror="true">
+			<arg value="push" />
+			<arg value="${out.flashable.zip}" />
+			<arg value="/sdcard/" />
+		</exec>
+	</target>
+	<target name="sideload-zip" depends="out">
+		<exec executable="adb" failonerror="true">
+			<arg value="usb" />
+		</exec>
+		<exec executable="adb" failonerror="true">
+			<arg value="sideload" />
+			<arg value="${out.flashable.zip}" />
+		</exec>
+	</target>
+	<target name="clean-build" depends="clean,out" />
+</project>

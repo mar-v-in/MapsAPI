@@ -306,6 +306,11 @@ public abstract class Overlay implements OverlayConstants {
 	 * underlying {@link MapView} has the chance to handle this event.
 	 */
 	public boolean onSingleTapUp(final MotionEvent e, final MapView mapView) {
+		return onTap(mapView.getProjection().fromPixels(e.getX(), e.getY()),
+				mapView);
+	}
+
+	public boolean onTap(GeoPoint p, MapView mapView) {
 		return false;
 	}
 
