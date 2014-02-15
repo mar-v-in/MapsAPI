@@ -57,9 +57,12 @@
 		<mkdir dir="${out.dir}" />
 		<mkdir dir="${out.files.dir}/system/framework" />
 		<mkdir dir="${out.files.dir}/system/etc/permissions" />
+		<mkdir dir="${out.files.dir}/system/addon.d" />
 		<copy file="${target.jar}" toDir="${out.files.dir}/system/framework" />
 		<copy file="${in.dir}/com.google.android.maps.xml" 
 			toDir="${out.files.dir}/system/etc/permissions" />
+		<copy file="${in.dir}/10-mapsapi.sh"
+			toDir="${out.files.dir}/system/addon.d" />
 		<copy file="${in.dir}/flashable.zip" toFile="${out.flashable.zip}" />
 		<zip update="yes" compress="false" destfile="${out.flashable.zip}" 
 			basedir="${out.files.dir}" />
