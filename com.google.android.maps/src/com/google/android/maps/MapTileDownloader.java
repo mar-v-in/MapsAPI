@@ -21,6 +21,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.google.android.maps.BitmapTileSourceBase.LowMemoryException;
+import org.apache.http.params.CoreProtocolPNames;
 
 /**
  * The {@link MapTileDownloader} loads tiles from an HTTP server. It saves
@@ -36,6 +37,8 @@ public class MapTileDownloader extends MapTileModuleProviderBase {
 	// ===========================================================
 	// Constants
 	// ===========================================================
+
+	private static final String USER_AGENT = "MapsAPI/0.x (Linux; Android)";
 
 	private class TileLoader extends MapTileModuleProviderBase.TileLoader {
 
@@ -78,6 +81,7 @@ public class MapTileDownloader extends MapTileModuleProviderBase {
 					}
 
 					final HttpClient client = new DefaultHttpClient();
+					client.getParams().setParameter(CoreProtocolPNames.USER_AGENT, USER_AGENT);
 					final HttpUriRequest head = new HttpGet(tileURLString);
 					final HttpResponse response = client.execute(head);
 
