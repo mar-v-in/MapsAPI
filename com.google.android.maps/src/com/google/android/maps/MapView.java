@@ -560,7 +560,7 @@ public class MapView extends ViewGroup implements IMapView, MapViewConstants,
 
 		@Override
 		public Point toPixels(GeoPoint in, Point out, boolean flag) {
-			toMapPixels(in, out);
+			out = toMapPixels(in, out);
 			if (flag) {
 				out.offset(-mapView.getScrollX(), -mapView.getScrollY());
 				out.offset(getViewWidth2(), getViewHeight2());
