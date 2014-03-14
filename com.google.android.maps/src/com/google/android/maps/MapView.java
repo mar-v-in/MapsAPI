@@ -103,17 +103,40 @@ public class MapView extends ViewGroup implements IMapView, MapViewConstants,
 		 */
 		public static final int BOTTOM_RIGHT = 9;
 		/**
+		 * The child view's position will change when the map scrolls or zooms.
+		 */
+		public static final int MODE_MAP = 0;
+		/**
+		 * The child view's position will stay fixed relative to the parent view, and will not move when the map scrolls or zooms.
+		 */
+		public static final int MODE_VIEW = 1;
+
+		/**
 		 * The location of the child within the map view.
 		 */
-		public GeoPoint geoPoint;
+		public GeoPoint point;
 
 		/**
 		 * The alignment the alignment of the view compared to the location.
 		 */
 		public int alignment;
 
-		public int offsetX;
-		public int offsetY;
+		/**
+		 * The layout mode.
+		 * @see #MODE_MAP
+		 * @see #MODE_VIEW
+		 */
+		public int mode;
+
+		/**
+		 * The x location of the child relative to the view.
+		 */
+		public int x;
+
+		/**
+		 * The y location of the child relative to the view.
+		 */
+		public int y;
 
 		/**
 		 * Since we cannot use XML files in this project this constructor is
@@ -128,7 +151,7 @@ public class MapView extends ViewGroup implements IMapView, MapViewConstants,
 		 */
 		public LayoutParams(final Context c, final AttributeSet attrs) {
 			super(c, attrs);
-			geoPoint = new GeoPoint(0, 0);
+			point = new GeoPoint(0, 0);
 			alignment = BOTTOM_CENTER;
 		}
 
@@ -144,30 +167,36 @@ public class MapView extends ViewGroup implements IMapView, MapViewConstants,
 		 *            {@link #WRAP_CONTENT} or a fixed size in pixels
 		 * @param geoPoint
 		 *            the location of the child within the map view
-		 * @param alignment
-		 *            the alignment of the view compared to the location
-		 *            {@link #BOTTOM_CENTER}, {@link #BOTTOM_LEFT},
-		 *            {@link #BOTTOM_RIGHT} {@link #TOP_CENTER},
-		 *            {@link #TOP_LEFT}, {@link #TOP_RIGHT}
 		 * @param offsetX
 		 *            the additional X offset from the alignment location to
 		 *            draw the child within the map view
 		 * @param offsetY
 		 *            the additional Y offset from the alignment location to
-		 *            draw the child within the map view
+		 * @param alignment
+		 *            the alignment of the view compared to the location
+		 *            {@link #BOTTOM_CENTER}, {@link #BOTTOM_LEFT},
+		 *            {@link #BOTTOM_RIGHT} {@link #TOP_CENTER},
+		 *            {@link #TOP_LEFT}, {@link #TOP_RIGHT}
 		 */
 		public LayoutParams(final int width, final int height,
-				final GeoPoint geoPoint, final int alignment,
-				final int offsetX, final int offsetY) {
+		                    final GeoPoint geoPoint, final int offsetX, final int offsetY, final int alignment) {
 			super(width, height);
 			if (geoPoint != null) {
-				this.geoPoint = geoPoint;
+				this.point = geoPoint;
 			} else {
-				this.geoPoint = new GeoPoint(0, 0);
+				this.point = new GeoPoint(0, 0);
 			}
 			this.alignment = alignment;
-			this.offsetX = offsetX;
-			this.offsetY = offsetY;
+			this.x = offsetX;
+			this.y = offsetY;
+		}
+
+		public LayoutParams(int width, int height, GeoPoint geoPoint, int alignment) {
+			this(width, height, geoPoint, 0, 0, alignment);
+		}
+
+		public LayoutParams(int width, int height, int x, int y, int alignment) {
+			this(width, height, null, x, y, alignment);
 		}
 
 		/**
@@ -920,7 +949,7 @@ public class MapView extends ViewGroup implements IMapView, MapViewConstants,
 	protected ViewGroup.LayoutParams generateDefaultLayoutParams() {
 		return new MapView.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
 				ViewGroup.LayoutParams.WRAP_CONTENT, null,
-				MapView.LayoutParams.BOTTOM_CENTER, 0, 0);
+				0, 0, MapView.LayoutParams.BOTTOM_CENTER);
 	}
 
 	// ===========================================================
@@ -1266,7 +1295,7 @@ public class MapView extends ViewGroup implements IMapView, MapViewConstants,
 							.getLayoutParams();
 					final int childHeight = child.getMeasuredHeight();
 					final int childWidth = child.getMeasuredWidth();
-					getProjection().toMapPixels(lp.geoPoint, mPoint);
+					getProjection().toMapPixels(lp.point, mPoint);
 					final int x = mPoint.x + getWidth() / 2;
 					final int y = mPoint.y + getHeight() / 2;
 					int childLeft = x;
@@ -1309,8 +1338,8 @@ public class MapView extends ViewGroup implements IMapView, MapViewConstants,
 						childTop = getPaddingTop() + y - childHeight;
 						break;
 					}
-					childLeft += lp.offsetX;
-					childTop += lp.offsetY;
+					childLeft += lp.x;
+					childTop += lp.y;
 					child.layout(childLeft, childTop, childLeft + childWidth,
 							childTop + childHeight);
 				}
@@ -1342,7 +1371,7 @@ public class MapView extends ViewGroup implements IMapView, MapViewConstants,
 							.getLayoutParams();
 					final int childHeight = child.getMeasuredHeight();
 					final int childWidth = child.getMeasuredWidth();
-					getProjection().toMapPixels(lp.geoPoint, mPoint);
+					getProjection().toMapPixels(lp.point, mPoint);
 					final int x = mPoint.x + getWidth() / 2;
 					final int y = mPoint.y + getHeight() / 2;
 					int childRight = x;
@@ -1385,8 +1414,8 @@ public class MapView extends ViewGroup implements IMapView, MapViewConstants,
 						childBottom = y + childHeight;
 						break;
 					}
-					childRight += lp.offsetX;
-					childBottom += lp.offsetY;
+					childRight += lp.x;
+					childBottom += lp.y;
 
 					maxWidth = Math.max(maxWidth, childRight);
 					maxHeight = Math.max(maxHeight, childBottom);
